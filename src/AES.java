@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 /**
  * Created by Jose Bigio & John-Cade on 6/29/14.
  */
@@ -172,7 +170,7 @@ public class AES
         for(i = 0;i<numRounds-1;i++)
         {
             System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-            state = get2DArrayFromLookupTable(state,lookupTable);
+            state = doSubBytes(state, lookupTable);
             System.out.println("\nafter subBytes round " + (i+1));
             print2dArray(state);
             doShiftRows(state);
@@ -191,7 +189,7 @@ public class AES
         }
 
         System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-        state = get2DArrayFromLookupTable(state,lookupTable);
+        state = doSubBytes(state, lookupTable);
         System.out.println("\nafter subBytes round " + numRounds);
         print2dArray(state);
         doShiftRows(state);
@@ -214,7 +212,7 @@ public class AES
         for(i = 0;i<numRounds-1;i++)
         {
             System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-            state = get2DArrayFromLookupTable(state,lookupTable);
+            state = doSubBytes(state, lookupTable);
             System.out.println("\nafter subBytes round " + (i+1));
             print2dArray(state);
             doShiftRows(state);
@@ -233,7 +231,7 @@ public class AES
         }
 
         System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-        state = get2DArrayFromLookupTable(state,lookupTable);
+        state = doSubBytes(state, lookupTable);
         System.out.println("\nafter subBytes round " + numRounds);
         print2dArray(state);
         doShiftRows(state);
@@ -446,7 +444,7 @@ public class AES
     }
 
 
-    public static int[][] get2DArrayFromLookupTable(int[][]arr,int[][]lookupTable)
+    public static int[][] doSubBytes(int[][] arr, int[][] lookupTable)
     {
         int[][] result = new int[arr.length][arr[0].length];
         for(int i = 0;i<arr.length;i++)
