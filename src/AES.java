@@ -16,6 +16,8 @@ public class AES
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
 
+
+
     static int[][] lookupTable = {
             {0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
                     0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76},
@@ -129,27 +131,33 @@ public class AES
 
     public static void main(String[] args)
     {
-        System.out.println("Hello World");
 
-        int[][] testKey = {{0x2b,0x28,0xab,0x09},
+
+        /*int[][] testKey = {{0x2b,0x28,0xab,0x09},
                            {0x7e,0xae,0xf7,0xcf},
                            {0x15,0xd2,0x15,0x4f},
-                           {0x16,0xa6,0x88,0x3c}};
+                           {0x16,0xa6,0x88,0x3c}};*/
 
-        int[][] testPlainText = {{0x19,0xa0,0x9a,0xe9},
+       /* int[][] testPlainText = {{0x19,0xa0,0x9a,0xe9},
                                 {0x3d,0xf4,0xc6,0xf8},
                                 {0xe3,0xe2,0x8d,0x48},
                                 {0xbe,0x2b,0x2a,0x08}};
+*/
 
-        /*
-        int[][] testKey = { {0x00,0x00,0x00,0x00},
-                            {0x00,0x00,0x00,0x00},
-                            {0x00,0x00,0x00,0x00},
-                            {0x00,0x00,0x00,0x00} };
+        int[][] testKey = { {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+                            {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+                            {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+                            {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00} };
 
-                            */
+        int[][] testPlainText = { {0x00,0x44,0x88,0xcc},
+                {0x11,0x55,0x99,0xdd},
+                {0x22,0x66,0xaa,0xee},
+                {0x33,0x77,0xbb,0xff} };
 
-        encrypt(testPlainText,testKey,10);
+
+
+
+        encrypt(testPlainText,testKey,14);
 
 
 
@@ -160,8 +168,8 @@ public class AES
         int[][] expandedKey = getexpandedKey(key,numRounds);
         System.out.println("Expanded Key:");
         print2dArray(expandedKey);
-
-        for(int i = 0;i<numRounds-1;i++)
+        int i;
+        for(i = 0;i<numRounds-1;i++)
         {
             System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
             state = get2DArrayFromLookupTable(state,lookupTable);
@@ -182,7 +190,49 @@ public class AES
 
         }
 
-        System.out.println("\n----------------------------------------------- Round: " + (10) + " -----------------------------------------------");
+        System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
+        state = get2DArrayFromLookupTable(state,lookupTable);
+        System.out.println("\nafter subBytes round " + numRounds);
+        print2dArray(state);
+        doShiftRows(state);
+        System.out.println("\nafter shift rows round " + numRounds);
+        print2dArray(state);
+
+        System.out.println("\nafter addroundkey round " + numRounds);
+        doAddRoundKey(state,expandedKey,numRounds-1);
+        print2dArray(state);
+
+
+    }
+
+    public static void decrypt(int[][]state,int[][]key,int numRounds)
+    {
+        int[][] expandedKey = getexpandedKey(key,numRounds);
+        System.out.println("Expanded Key:");
+        print2dArray(expandedKey);
+        int i;
+        for(i = 0;i<numRounds-1;i++)
+        {
+            System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
+            state = get2DArrayFromLookupTable(state,lookupTable);
+            System.out.println("\nafter subBytes round " + (i+1));
+            print2dArray(state);
+            doShiftRows(state);
+            System.out.println("\nafter shift rows round " + (i+1));
+            print2dArray(state);
+
+            System.out.println("\nafter mixed cols round " + (i+1));
+            doMixColumns(state);
+            print2dArray(state);
+
+            System.out.println("\nafter addroundkey round " + (i+1));
+            doAddRoundKey(state,expandedKey,i);
+            print2dArray(state);
+
+
+        }
+
+        System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
         state = get2DArrayFromLookupTable(state,lookupTable);
         System.out.println("\nafter subBytes round " + numRounds);
         print2dArray(state);
@@ -252,18 +302,28 @@ public class AES
 
     public static int[][] getexpandedKey(int[][] normalKey,int numRounds)
     {
-        int[][] result = new int[normalKey.length][normalKey[0].length*(numRounds+1)];
+        //place holder for the expanded key
+        int[][] result = new int[normalKey.length][64];
 
-        //copy the first block
+
+
         copyBlockIntoArray(result,normalKey,0);
 
-        int[][] prevKeyBox = normalKey;
-        for(int i = 0;i<numRounds;i++)
+
+        //get the first block
+        int[][]prevKeyBox = normalKey;
+
+        for(int i = 0;i<6;i++)
         {
-            int[][]nextBlock = getExpandedKeyBox(prevKeyBox,i);
-            copyBlockIntoArray(result,nextBlock,(i+1)*4);
+            int[][]nextBlock = getExpandedKeyBox(prevKeyBox,i,true);
+            copyBlockIntoArray(result,nextBlock,(i+1)*8);
             prevKeyBox = nextBlock;
         }
+        int[][]nextBlock = getExpandedKeyBox(prevKeyBox,6,false);
+        copyBlockIntoArray(result,nextBlock,(6+1)*8);
+
+
+
 
         return result;
     }
@@ -280,7 +340,7 @@ public class AES
         }
     }
 
-    public static int[][] getExpandedKeyBox(int[][]prevBox, int stepNum)
+    public static int[][] getExpandedKeyBox(int[][]prevBox, int stepNum,boolean completeBlock)
     {
 
         int[][]result = new int[prevBox.length][prevBox[0].length];
@@ -288,26 +348,58 @@ public class AES
 
         //grab the last col,shift and sub it
         int[] rotWord = getColFrom2dArray(prevBox,prevBox[0].length-1);
+
         rotWord = shiftArr(rotWord);
+
         rotWord = getSubArrayFromLookupTable(rotWord,lookupTable);
+
 
         //xor it with rcon and the first col
         int[] xoredArr = getXoredArr(rotWord,getColFrom2dArray(prevBox,0));
         xoredArr = getXoredArr(xoredArr,getColFrom2dArray(Rcon,stepNum)); //stepnum from 0
+
+
 
         //copy it to result
         for(int i = 0;i<prevBox.length;i++)
            result[i][0] = xoredArr[i];
 
 
-        //complete the next columns
+        //complete the  3 next columns
         for(int i = 0;i<prevBox.length;i++)
         {
-            for(int j = 1;j<prevBox[i].length;j++)
+            for(int j = 1;j<4;j++)
             {
                 result[i][j] = prevBox[i][j] ^ result[i][j-1];
             }
         }
+
+        if(!completeBlock) return result;
+
+        //generate the next next column
+        int[] temp = getColFrom2dArray(result,3);
+
+        temp = getSubArrayFromLookupTable(temp,lookupTable);
+
+        temp = getXoredArr(temp,getColFrom2dArray(prevBox,4));
+
+        //save it
+        for(int i = 0;i<prevBox.length;i++)
+            result[i][4] = temp[i];
+
+        //complete the  3 next columns
+        for(int i = 0;i<result.length;i++)
+        {
+            for(int j = 0;j<3;j++)
+            {
+                result[i][j+5] = result[i][j+4] ^ prevBox[i][j+1+4];
+            }
+        }
+
+
+
+
+
 
         return result;
     }
@@ -338,7 +430,7 @@ public class AES
     public static int[] getColFrom2dArray(int[][]arr, int col)
     {
         int[] result = new int[arr.length];
-        for(int i = 0;i<result.length;i++)
+        for(int i = 0;i<arr.length;i++)
         {
             result[i] = arr[i][col];
         }
@@ -388,7 +480,7 @@ public class AES
         {
             for(int j = 0;j<arr[i].length;j++)
             {
-                System.out.print(Integer.toHexString(arr[i][j]) + " ");
+                System.out.print(Integer.toHexString(arr[i][j]) + "\t");
             }
             System.out.println();
         }
