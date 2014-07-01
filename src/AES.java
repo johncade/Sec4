@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 /**
  * Created by Jose Bigio & John-Cade on 6/29/14.
  */
@@ -155,17 +157,27 @@ public class AES
 
 
 
-        encrypt(testPlainText,testKey,14);
+        int[][] encryptedBlock = encrypt(testPlainText,testKey,14);
+        System.out.println("\n-----------------------------Decryption:-----------------------------");
+        System.out.println("Encrypted State:");
+        print2dArray(encryptedBlock);
+        int[][] decryptedBlock = decrypt(encryptedBlock, testKey, 14);
 
 
 
     }
 
-    public static void encrypt(int[][]state,int[][]key,int numRounds)
+    public static int[][] encrypt(int[][]state,int[][]key,int numRounds)
     {
         int[][] expandedKey = getexpandedKey(key,numRounds);
         System.out.println("Expanded Key:");
         print2dArray(expandedKey);
+
+        //do initial addRound:
+        System.out.println("\nafter initial addRoundKey");
+        doAddRoundKey(state, expandedKey, 0);
+        print2dArray(state);
+
         int i;
         for(i = 0;i<numRounds-1;i++)
         {
@@ -200,49 +212,64 @@ public class AES
         doAddRoundKey(state,expandedKey,numRounds-1);
         print2dArray(state);
 
+        return state;
+
 
     }
 
-    public static void decrypt(int[][]state,int[][]key,int numRounds)
+    public static int[][] decrypt(int[][]state,int[][]key,int numRounds)
     {
         int[][] expandedKey = getexpandedKey(key,numRounds);
-        System.out.println("Expanded Key:");
+        System.out.println("\nExpanded Key:");
         print2dArray(expandedKey);
+
+        //Initial round
+        doAddRoundKey(state, expandedKey, numRounds-1);
+        System.out.println("after initial addRoundKey");
+        print2dArray(state);
+
+        System.out.println("after initial subBytes");
+        state = doSubBytes(state,inverseLookupTable);
+        print2dArray(state);
+
+        System.out.println("after initial inverseShiftRows");
+        doInverseShiftRows(state);
+        print2dArray(state);
+
+
         int i;
-        for(i = 0;i<numRounds-1;i++)
+        for(i = numRounds-2; i>=0 ; i--)
         {
             System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-            state = doSubBytes(state, lookupTable);
-            System.out.println("\nafter subBytes round " + (i+1));
-            print2dArray(state);
-            doShiftRows(state);
-            System.out.println("\nafter shift rows round " + (i+1));
-            print2dArray(state);
-
-            System.out.println("\nafter mixed cols round " + (i+1));
-            doMixColumns(state);
-            print2dArray(state);
 
             System.out.println("\nafter addroundkey round " + (i+1));
             doAddRoundKey(state,expandedKey,i);
             print2dArray(state);
 
+            System.out.println("\nafter inversedMixed cols round " + (i+1));
+            doInverseMixColumns(state);
+            print2dArray(state);
+
+            state = doSubBytes(state, inverseLookupTable);
+            System.out.println("\nafter inverseSubBytes round " + (i+1));
+            print2dArray(state);
+
+
+            doInverseShiftRows(state);
+            System.out.println("\nafter inverseShift rows round " + (i+1));
+            print2dArray(state);
+
+
 
         }
 
         System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
-        state = doSubBytes(state, lookupTable);
-        System.out.println("\nafter subBytes round " + numRounds);
-        print2dArray(state);
-        doShiftRows(state);
-        System.out.println("\nafter shift rows round " + numRounds);
+
+        System.out.println("\nafter addroundkey round " + (i+1));
+        doAddRoundKey(state,expandedKey,0);
         print2dArray(state);
 
-        System.out.println("\nafter addroundkey round " + numRounds);
-        doAddRoundKey(state,expandedKey,numRounds-1);
-        print2dArray(state);
-
-
+        return state;
     }
 
     public static void doAddRoundKey(int[][]state,int[][]expandedKey,int roundNum)
@@ -273,11 +300,27 @@ public class AES
         }
     }
 
+    public static void doInverseShiftRows(int[][]arr)
+    {
+        for(int i = 0;i<arr.length;i++)
+        {
+            arr[i] = getInvshiftedArr(arr[i], i);
+        }
+    }
+
     public static void doMixColumns(int[][]arr)
     {
         for(int i = 0;i<arr[0].length;i++)
         {
             mixColumn2(i,arr);
+        }
+    }
+
+    public static void doInverseMixColumns(int[][]arr)
+    {
+        for(int i = 0;i<arr[0].length;i++)
+        {
+            invMixColumn2(i,arr);
         }
     }
 
@@ -297,6 +340,22 @@ public class AES
         return result;
     }
 
+    public static int[] getInvshiftedArr(int[]arr,int times)
+    {
+
+        int[]result = new int[arr.length];
+        for(int i = 0;i<arr.length-times;i++)
+        {
+            result[times+i] = arr[i];
+        }
+
+        for(int i = 0;i<times;i++)
+        {
+            result[i] = arr[arr.length-times+i];
+        }
+
+        return result;
+    }
 
     public static int[][] getexpandedKey(int[][] normalKey,int numRounds)
     {
@@ -529,10 +588,10 @@ public class AES
         for (int i = 0; i < 4; i++)
             a[i] = st[i][c];
 
-        st[0][c] = (byte)(mul(0xE,a[0]) ^ mul(0xB,a[1]) ^ mul(0xD, a[2]) ^ mul(0x9,a[3]));
-        st[1][c] = (byte)(mul(0xE,a[1]) ^ mul(0xB,a[2]) ^ mul(0xD, a[3]) ^ mul(0x9,a[0]));
-        st[2][c] = (byte)(mul(0xE,a[2]) ^ mul(0xB,a[3]) ^ mul(0xD, a[0]) ^ mul(0x9,a[1]));
-        st[3][c] = (byte)(mul(0xE,a[3]) ^ mul(0xB,a[0]) ^ mul(0xD, a[1]) ^ mul(0x9,a[2]));
+        st[0][c] = (mul(0xE,a[0]) ^ mul(0xB,a[1]) ^ mul(0xD, a[2]) ^ mul(0x9,a[3]));
+        st[1][c] = (mul(0xE,a[1]) ^ mul(0xB,a[2]) ^ mul(0xD, a[3]) ^ mul(0x9,a[0]));
+        st[2][c] = (mul(0xE,a[2]) ^ mul(0xB,a[3]) ^ mul(0xD, a[0]) ^ mul(0x9,a[1]));
+        st[3][c] = (mul(0xE,a[3]) ^ mul(0xB,a[0]) ^ mul(0xD, a[1]) ^ mul(0x9,a[2]));
     } // invMixColumn2
 
 }
