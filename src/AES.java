@@ -1,6 +1,4 @@
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -12,6 +10,8 @@ public class AES
     private static boolean encrypt;
     private static String plainTextFile;
     private static String keyFile;
+    private static String outputFile;
+    private static PrintWriter out;
     private static int[][] key;
     //Fixed Tables
 
@@ -182,21 +182,26 @@ public class AES
     public static void run() throws IOException {
 
         if(encrypt) {
-
+            out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
             key = getKey();
-            print2dArray(key);
+
             Scanner scan = new Scanner(new FileInputStream(plainTextFile));
+
             while (scan.hasNextLine()) {
                 try {
                     int[][] plainText = getPlaintext(scan);
+                    out.println("The Plaintext is :");
                     print2dArray(plainText);
-                    System.out.println(plainText.toString());
+                    printArray(plainText);
+                    out.println("The CipherKey is :");
+                    printArray(key);
                     encrypt(plainText,key,14);
 
                 } catch (NumberFormatException ex) {
                     System.out.println("Number format error");
                     return;
                 }
+                out.close();
             }
         }
     }
@@ -282,6 +287,9 @@ public class AES
         }
             keyFile = args[1];
             plainTextFile = args[2];
+            outputFile = plainTextFile + ".enc";
+            File output = new File(outputFile);
+            output.createNewFile();
 
 
     }
@@ -289,25 +297,38 @@ public class AES
     {
         int[][] expandedKey = getexpandedKey(key,numRounds);
         System.out.println("Expanded Key:");
+        out.println("The expanded key is:");
+        printArray(expandedKey);
         print2dArray(expandedKey);
         int i;
         for(i = 0;i<numRounds-1;i++)
         {
             System.out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
+            out.println("\n----------------------------------------------- Round: " + (i+1) + " -----------------------------------------------");
+
             state = doSubBytes(state, lookupTable);
             System.out.println("\nafter subBytes round " + (i+1));
+            out.println("\nafter subBytes round " + (i+1));
             print2dArray(state);
+            printArray(state);
+
             doShiftRows(state);
             System.out.println("\nafter shift rows round " + (i+1));
+            out.println("\nafter shift rows round " + (i+1));
             print2dArray(state);
+            printArray(state);
 
             System.out.println("\nafter mixed cols round " + (i+1));
+            out.println("\nafter shift rows round " + (i+1));
             doMixColumns(state);
             print2dArray(state);
+            printArray(state);
 
             System.out.println("\nafter addroundkey round " + (i+1));
+            out.println("\nafter addroundkey round " + (i+1));
             doAddRoundKey(state,expandedKey,i);
             print2dArray(state);
+            printArray(state);
 
 
         }
@@ -660,12 +681,12 @@ public class AES
     } // invMixColumn2
 
     public static void printArray(int[][] a){
-        System.out.println("Printing Array...");
+
         for(int row = 0; row < a.length; row++){
             for(int col = 0; col < a[0].length; col++){
-                System.out.print(a[row][col] + " ");
+                out.print(a[row][col] + " ");
             }
-            System.out.println();
+            out.println();
         }
     }
 }
