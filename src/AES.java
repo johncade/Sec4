@@ -1,9 +1,19 @@
+
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.Scanner;
+
 /**
  * Created by Jose Bigio & John-Cade on 6/29/14.
  */
+
+
 public class AES
 {
-
+    private static boolean encrypt;
+    private static String filename;
+    private static int[][] testKey;
     //Fixed Tables
 
     static int[][] Rcon = {
@@ -127,8 +137,7 @@ public class AES
 
 
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws Exception {
 
 
         /*int[][] testKey = {{0x2b,0x28,0xab,0x09},
@@ -142,6 +151,11 @@ public class AES
                                 {0xbe,0x2b,0x2a,0x08}};
 */
 
+
+
+        /*
+        1) read one line, convert to 2-D array
+         */
         int[][] testKey = { {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
                             {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
                             {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
@@ -153,14 +167,89 @@ public class AES
                 {0x33,0x77,0xbb,0xff} };
 
 
-
-
+        getArgs(args);
+        run();
         encrypt(testPlainText,testKey,14);
 
 
 
     }
 
+    public static void run() throws IOException {
+
+
+
+        if(encrypt) {
+
+            Scanner scan = new Scanner(new FileInputStream(filename));
+            while (scan.hasNextLine()) {
+                try {
+                    int[][] plainText = getPlaintext(scan);
+                    System.out.println(plainText.toString());
+
+                } catch (NumberFormatException ex) {
+                    System.out.println("Number format error");
+                }
+            }
+        }
+    }
+/*
+1) takes in the scanner and reads one line,
+2) constructs a temporary character array from that line.
+3) copies that temp char array to a nextLine character array "nextLine" and pads it if necessary.
+4) Coverts the characters in nextLine to hex and inserts into "result"
+*/
+    public static int[][] getPlaintext (Scanner scan) {
+        int[][] result = new int[4][4];
+        char[] temp = scan.nextLine().toCharArray();
+
+        if (temp.length > 32) {
+            //skip line
+            temp = scan.nextLine().toCharArray();
+        }
+
+        char[] nextLine = new char[32];
+        //Pad end of next line if short
+
+        for (int i = 0; i < nextLine.length; i++) {
+            if (i < temp.length){   nextLine[i] = temp[i];}
+            else { nextLine[i] = '0';}
+        }
+        for (int i = 0; i < nextLine.length; i++){
+            System.out.print(nextLine[i]);
+
+    }
+       System.out.println();
+        int col = 0;
+        int row = 0;
+
+            for(int i = 0; i < nextLine.length; i+=2) {
+            String hex = "";
+            for (int k = 0; k < 2; k++) {
+                hex = hex + nextLine[i + k];
+            }
+                int num = Integer.parseInt(hex, 16);
+
+            result[col][row] = num;
+            //System.out.println("hex = " + hex);
+            //System.out.println("num = " + num);
+            col++;
+            if(col == 4) { col = 0; row ++; }
+        }
+
+        return result;
+    }
+    public static void getArgs(String[] args) throws Exception {
+
+
+        if((args[0].length() == 2) && (args[0].charAt(0) == 'e')) encrypt = true;
+        else if((args[0].length() == 2) && args[0].charAt(0) == 'd') encrypt = false;
+        else
+           // throw new IllegalArgumentException("Invalid Arguments");
+
+        filename = args[1];
+
+    }
     public static void encrypt(int[][]state,int[][]key,int numRounds)
     {
         int[][] expandedKey = getexpandedKey(key,numRounds);
