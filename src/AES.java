@@ -1,9 +1,18 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Scanner;
+
 /**
  * Created by Jose Bigio & John-Cade on 6/29/14.
  */
 public class AES
 {
-
+    private static boolean encrypt;
+    private static String plainTextFile;
+    private static String keyFile;
+    private static int[][] key;
     //Fixed Tables
 
     static int[][] Rcon = {
@@ -127,8 +136,7 @@ public class AES
 
 
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws Exception {
 
 
         /*int[][] testKey = {{0x2b,0x28,0xab,0x09},
@@ -154,13 +162,129 @@ public class AES
 
 
 
-
-        encrypt(testPlainText,testKey,14);
-
-
+        try{
+            getArgs(args);
+        }
+        catch (Exception ex) {
+            System.out.println("Invalid Arguments");
+            return;
+        }
+        //try {
+            run();
+        //}
+        //catch(Exception ex){
+          //  System.out.println("Error");
+            //return;
+        //}
 
     }
 
+    public static void run() throws IOException {
+
+        if(encrypt) {
+
+            key = getKey();
+            print2dArray(key);
+            Scanner scan = new Scanner(new FileInputStream(plainTextFile));
+            while (scan.hasNextLine()) {
+                try {
+                    int[][] plainText = getPlaintext(scan);
+                    print2dArray(plainText);
+                    System.out.println(plainText.toString());
+                    encrypt(plainText,key,14);
+
+                } catch (NumberFormatException ex) {
+                    System.out.println("Number format error");
+                    return;
+                }
+            }
+        }
+    }
+    /*
+1) takes in the scanner and reads one line,
+2) constructs a temporary character array from that line.
+3) copies that temp char array to a nextLine character array "nextLine" and pads it if necessary.
+4) Coverts the characters in nextLine to hex and inserts into "result"
+*/
+    public static int[][] getPlaintext (Scanner scan) {
+        System.out.println("Running getPlaintext");
+        int[][] result = new int[4][4];
+        char[] temp = scan.nextLine().toCharArray();
+
+        if (temp.length > 32) {
+            //skip line
+            temp = scan.nextLine().toCharArray();
+        }
+
+        char[] nextLine = new char[32];
+        //Pad end of next line if short
+
+        for (int i = 0; i < nextLine.length; i++) {
+            if (i < temp.length){   nextLine[i] = temp[i];}
+            else { nextLine[i] = '0';}
+        }
+
+        int col = 0;
+        int row = 0;
+
+        for(int i = 0; i < nextLine.length; i+=2) {
+            String hex = "";
+            for (int k = 0; k < 2; k++) {
+                hex = hex + nextLine[i + k];
+            }
+            int num = Integer.parseInt(hex, 16);
+
+            result[col][row] = num;
+            //System.out.println("hex = " + hex);
+            //System.out.println("num = " + num);
+            col++;
+            if(col == 4) { col = 0; row ++; }
+        }
+
+        return result;
+    }
+    public static int[][] getKey() throws FileNotFoundException {
+        System.out.println("Running getKey");
+        Scanner scan = new Scanner(new FileInputStream(keyFile));
+        int[][] result = new int[4][8];
+        char[] line = scan.nextLine().toCharArray();
+        System.out.println("line length = " + line.length);
+        System.out.println(Arrays.toString(line));
+        if(line.length < 64){
+            throw new IllegalArgumentException("Error with the Key File, invalid key size");
+        }
+        int col = 0;
+        int row = 0;
+
+        for(int i = 0; i < line.length; i+=2) {
+            String hex = "";
+            for (int k = 0; k < 2; k++) {
+                hex = hex + line[i + k];
+            }
+            int num = Integer.parseInt(hex, 16);
+
+            result[col][row] = num;
+            //System.out.println("hex = " + hex);
+            //System.out.println("num = " + num);
+            col++;
+            if(col == 4) { col = 0; row ++; }
+        }
+
+        return result;
+    }
+    public static void getArgs(String[] args) throws Exception {
+
+
+        if((args.length == 3) && (args[0].charAt(0) == 'e')) encrypt = true;
+        else if((args.length == 3) && args[0].charAt(0) == 'd') encrypt = false;
+        else {
+            throw new IllegalArgumentException("Invalid Arguments");
+        }
+            keyFile = args[1];
+            plainTextFile = args[2];
+
+
+    }
     public static void encrypt(int[][]state,int[][]key,int numRounds)
     {
         int[][] expandedKey = getexpandedKey(key,numRounds);
@@ -535,4 +659,13 @@ public class AES
         st[3][c] = (byte)(mul(0xE,a[3]) ^ mul(0xB,a[0]) ^ mul(0xD, a[1]) ^ mul(0x9,a[2]));
     } // invMixColumn2
 
+    public static void printArray(int[][] a){
+        System.out.println("Printing Array...");
+        for(int row = 0; row < a.length; row++){
+            for(int col = 0; col < a[0].length; col++){
+                System.out.print(a[row][col] + " ");
+            }
+            System.out.println();
+        }
+    }
 }
