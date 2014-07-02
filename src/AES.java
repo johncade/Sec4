@@ -181,7 +181,7 @@ public class AES {
 
         int[][] encryptedBlock;
         if (encrypt) {
-            out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
+
             key = getKey();
 
 
@@ -189,20 +189,27 @@ public class AES {
 
             while (scan.hasNextLine()) {
                 try {
+                    out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile, true)));
                     int[][] plainText = getPlaintext(scan);
-                    //out.println("The Plaintext is :");
                     print2dArray(plainText);
-                    //printArray(plainText);
-                    //out.println("The CipherKey is :");
-                    //printArray(key);
                     encryptedBlock = encrypt(plainText, key, 14);
+                    print2dArray(encryptedBlock);
                     printArray(encryptedBlock);
+                    out.close();
 
                 } catch (NumberFormatException ex) {
                     System.out.println("Number format error");
                     return;
                 }
-                out.close();
+
+            }
+        }
+        else { //decrypt
+            key = getKey();
+            Scanner scan = new Scanner(new FileInputStream(plainTextFile));
+            while(scan.hasNextLine()){
+                encryptedBlock = getEncryptedText(scan);
+                int[][] decryptedBlock = decrypt(encryptedBlock, key, 14);
             }
         }
     }
@@ -255,6 +262,29 @@ public class AES {
         }
 
         return result;
+    }
+    public static int[][] getEncryptedText(Scanner scan) {
+        int[][] result = new int[4][4];
+        int col = 0;
+        int row = 0;
+        //NEED To Finish
+        char[] temp = scan.nextLine().toCharArray();
+
+        for (int i = 0; i < temp.length; i += 2) {
+            String hex = "";
+            for (int k = 0; k < 2; k++) {
+                hex = hex + temp[i + k];
+            }
+            int num = Integer.parseInt(hex, 16);
+            result[row][col] = num;
+            col++;
+            if (col == 4) {
+                col = 0;
+                row++;
+            }
+        }
+        return result;
+
     }
 
     public static int[][] getKey() throws FileNotFoundException {
@@ -676,13 +706,14 @@ public class AES {
         st[3][c] = (mul(0xE, a[3]) ^ mul(0xB, a[0]) ^ mul(0xD, a[1]) ^ mul(0x9, a[2]));
     } // invMixColumn2
 
-    public static void printArray(int[][] a) {
+    public static void printArray(int[][] arr) {
     System.out.println("Printing to File");
-        for (int row = 0; row < a.length; row++) {
-            for (int col = 0; col < a[0].length; col++) {
-                out.print(a[row][col] + " ");
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr[i].length; j++) {
+                out.print(Integer.toHexString(arr[i][j]));
             }
             out.println();
         }
+        }
     }
-}
+
