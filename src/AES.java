@@ -215,8 +215,8 @@ public class AES {
                 out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile, true)));
                 printDecryptedBlock(decryptedBlock);
                 out.close();
-
             }
+
         }
     }
 public static void printDecryptedBlock(int[][] arr){
@@ -224,7 +224,7 @@ public static void printDecryptedBlock(int[][] arr){
         for(int k = 0; k < arr[0].length; k++){
             String res = Integer.toHexString(arr[k][i]);
             if(res.equals("0")) res = res +0;
-            out.print(res);
+            out.print(res.toUpperCase());
         }
 
     }
@@ -284,7 +284,8 @@ public static void printDecryptedBlock(int[][] arr){
         int col = 0;
         int row = 0;
         //System.out.println("WE ARE HERE---------------------------------------------------------------------------------------");
-        while(scan.hasNextLine()) {
+        int linesRead = 0;
+        while(linesRead < 4) {
             String temp = scan.nextLine().replaceAll("\t", "");
            // System.out.println(temp);
             char[] chars = temp.toCharArray();
@@ -303,6 +304,7 @@ public static void printDecryptedBlock(int[][] arr){
                     col++;
                 }
             }
+            linesRead++;
         }
         return result;
 
@@ -351,14 +353,15 @@ public static void printDecryptedBlock(int[][] arr){
         }
         keyFile = args[1];
         plainTextFile = args[2];
+
         if(encrypt) {
             outputFile = plainTextFile + ".enc";
         }
         else{ //decrypt
             outputFile = plainTextFile + ".dec";
         }
-        File output = new File(outputFile);
-        output.createNewFile();
+        File file = new File(outputFile);
+        file.delete();
 
 
     }
@@ -744,7 +747,7 @@ public static void printDecryptedBlock(int[][] arr){
 
                 res = res.replaceAll(" ", "0");
                 System.out.println(res);
-                out.print(res + "\t");
+                out.print(res.toUpperCase() + "\t");
             }
             out.println();
         }
