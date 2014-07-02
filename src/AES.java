@@ -209,11 +209,27 @@ public class AES {
             Scanner scan = new Scanner(new FileInputStream(plainTextFile));
             while(scan.hasNextLine()){
                 encryptedBlock = getEncryptedText(scan);
+                System.out.println("\n\n\nFinished making encrypted block");
+                print2dArray(encryptedBlock);
                 int[][] decryptedBlock = decrypt(encryptedBlock, key, 14);
+                out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile, true)));
+                printDecryptedBlock(decryptedBlock);
+                out.close();
+
             }
         }
     }
+public static void printDecryptedBlock(int[][] arr){
+    for(int i = 0; i < arr.length; i++){
+        for(int k = 0; k < arr[0].length; k++){
+            String res = Integer.toHexString(arr[k][i]);
+            if(res.equals("0")) res = res +0;
+            out.print(res);
+        }
 
+    }
+    out.println();
+}
     /*
 1) takes in the scanner and reads one line,
 2) constructs a temporary character array from that line.
@@ -267,20 +283,25 @@ public class AES {
         int[][] result = new int[4][4];
         int col = 0;
         int row = 0;
-        //NEED To Finish
-        char[] temp = scan.nextLine().toCharArray();
-
-        for (int i = 0; i < temp.length; i += 2) {
-            String hex = "";
-            for (int k = 0; k < 2; k++) {
-                hex = hex + temp[i + k];
-            }
-            int num = Integer.parseInt(hex, 16);
-            result[row][col] = num;
-            col++;
-            if (col == 4) {
-                col = 0;
+        //System.out.println("WE ARE HERE---------------------------------------------------------------------------------------");
+        while(scan.hasNextLine()) {
+            String temp = scan.nextLine().replaceAll("\t", "");
+           // System.out.println(temp);
+            char[] chars = temp.toCharArray();
+            for (int i = 0; i < chars.length; i += 2) {
+                String hex = "";
+                for (int k = 0; k < 2; k++) {
+                    hex = hex + chars[i + k];
+                }
+               // System.out.println(hex);
+                int num = Integer.parseInt(hex, 16);
+                result[col][row] = num;
                 row++;
+                //System.out.println("Row = " + row + " col = " + col);
+                if (row == 4) {
+                    row = 0;
+                    col++;
+                }
             }
         }
         return result;
@@ -330,7 +351,12 @@ public class AES {
         }
         keyFile = args[1];
         plainTextFile = args[2];
-        outputFile = plainTextFile + ".enc";
+        if(encrypt) {
+            outputFile = plainTextFile + ".enc";
+        }
+        else{ //decrypt
+            outputFile = plainTextFile + ".dec";
+        }
         File output = new File(outputFile);
         output.createNewFile();
 
@@ -707,10 +733,18 @@ public class AES {
     } // invMixColumn2
 
     public static void printArray(int[][] arr) {
-    System.out.println("Printing to File");
+    //System.out.println("Printing to File");
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr[i].length; j++) {
-                out.print(Integer.toHexString(arr[i][j]));
+                String res = Integer.toHexString(arr[i][j]);
+                System.out.println(res);
+                if(res.length() == 1){
+                    res = '0' + res;
+                }
+
+                res = res.replaceAll(" ", "0");
+                System.out.println(res);
+                out.print(res + "\t");
             }
             out.println();
         }
